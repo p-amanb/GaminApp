@@ -1,7 +1,6 @@
 import { AuthContext } from "@/src/context/AuthContext";
 import { AuthProvider } from "@/src/context/AuthProvider";
 import { THEME } from "@/src/styles/GlobalStyleSheet";
-import { getTokens } from "@/src/util/token";
 import { Slot, useRouter } from "expo-router";
 import { useContext, useEffect, useState } from "react";
 import { StatusBar } from "react-native";
@@ -19,43 +18,27 @@ export default function RootLayout() {
 
 function Navigator() {
   const auth = useContext(AuthContext)!;
-  const { user, isOnboarded } = auth;
+  const { user, isOnboarded,loading  } = auth;
   const router = useRouter();
-  const [isReady, setIsReady] = useState(false); // ✅ Track mounting
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     // Wait until the component is mounted
     setIsReady(true);
   }, []);
 
-  useEffect(() => {
-  const redirect = async () => {
-    try {
-      const {accessToken} = await getTokens()
+    useEffect(() => {
+    if (loading) return;
 
-      if (accessToken && isOnboarded) {
-        router.replace("/home");
-        return;
-      }
-
-      // Wait until mounting is ready
-      if (!isReady) return;
-      console.log(isOnboarded)
-      // Normal flow
-      if (!user) {
-        router.replace("/login");
-      } else if (!isOnboarded) {
-        router.replace("/onboarding");
-      } else {
-        router.replace("/home");
-      }
-    } catch (error) {
-      console.error("Error checking token:", error);
+    if (!user) {
+      router.replace("/login");
+    } else if (!isOnboarded) {
+      router.replace("/onboarding");
+    } else {
+      router.replace("/home");
     }
-  };
+  }, [user, isOnboarded, loading]);
 
-  redirect();
-}, [user, isOnboarded, isReady]);
 
   return <Slot />; // Always render Slot
 }

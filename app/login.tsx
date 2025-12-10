@@ -38,7 +38,7 @@ const LoginScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.logoContainer}>
         <Gamepad2 size={64} color={THEME.primary} />
-        <Text style={styles.title}>GAMIN</Text>
+        <Text style={styles.title}>GAMINN</Text>
         <Text style={styles.subtitle}>Enter the Arena</Text>
       </View>
 

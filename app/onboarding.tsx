@@ -1,3 +1,4 @@
+import Button from "@/src/component/Button";
 import { AuthContext } from "@/src/context/AuthContext";
 import { styles, THEME } from "@/src/styles/GlobalStyleSheet";
 import * as ImagePicker from "expo-image-picker"; // Make sure expo-image-picker is installed
@@ -6,7 +7,6 @@ import { Target, User } from "lucide-react-native";
 import React, { useContext, useState } from "react";
 import {
   ActivityIndicator,
-  Button,
   Image,
   ScrollView,
   Text,

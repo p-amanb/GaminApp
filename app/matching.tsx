@@ -44,11 +44,6 @@ const TeamMatchingScreen: React.FC = () => {
           <View style={styles.input}>
             <Text style={styles.inputText}>English / Hindi</Text>
           </View>
-
-          <Text style={styles.label}>Minimum Tier</Text>
-          <View style={styles.input}>
-            <Text style={styles.inputText}>Diamond V</Text>
-          </View>
         </View>
 
         {/* Matchmaking Button / Loader */}

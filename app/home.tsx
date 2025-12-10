@@ -6,13 +6,13 @@ import { styles, THEME } from "@/src/styles/GlobalStyleSheet";
 import { removeTokens } from "@/src/util/token";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { Crosshair, Shield, Target, Zap } from "lucide-react-native";
+import { Crosshair, Handshake, LogOut, Target, Zap } from "lucide-react-native";
 import React, { useContext, useEffect } from "react";
 import {
   ActivityIndicator,
-  ScrollView,
   Text,
-  View,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -60,16 +60,27 @@ const HomeScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
+      <View>
         {/* Header */}
         <View style={styles.header}>
           <View>
             <Text style={styles.welcome}>Welcome back,</Text>
             <Text style={styles.playerName}>{stats.clan?.name || "Player"}</Text>
           </View>
-          <View style={styles.rankBadge}>
+          <View style={{flexDirection:'row',alignItems:'center',gap:15}}>
+              <View style={styles.rankBadge}>
             <Text style={styles.rankText}>{stats.currentTier?.tier || "-"}</Text>
           </View>
+          <View>
+            <TouchableOpacity onPress={() => {
+            removeTokens()
+            router.replace("/login")
+            }}>
+              <LogOut fontWeight={"bold"} size={20} color={THEME.primary} style={{ marginRight: 8 }} />
+            </TouchableOpacity>
+          </View>
+          </View>
+        
         </View>
 
         {/* Main Stats Card */}
@@ -118,9 +129,10 @@ const HomeScreen: React.FC = () => {
             subValue={`${stats.headshots || 0} hits`}
           />
           <StatCard
-            label="Survival"
-            value={stats.subratings?.survived || 0}
-            icon={Shield}
+            label="Avg Assist"
+            value={stats?.avgAssists || 0}
+            icon={Handshake}
+            subValue={`Total: ${stats.totalAssists}`}
           />
         </View>
 
@@ -147,13 +159,13 @@ const HomeScreen: React.FC = () => {
         {/* Button */}
         <View style={{ marginTop: 30, paddingHorizontal: 20,display:"flex",gap:10 }}>
           <Button title="Team Matching" onPress={() => router.navigate("/matching")} />
-          <Button title="Logout" onPress={() => {
+          {/* <Button title="Logout" onPress={() => {
             removeTokens()
             router.replace("/login")
-            }} />
+            }} /> */}
 
         </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };

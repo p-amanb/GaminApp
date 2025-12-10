@@ -8,10 +8,10 @@ interface AuthProviderProps {
 }
 
 import { useRouter } from "expo-router";
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Toast } from "toastify-react-native";
 import userService from "../service/UserService";
-import { saveTokens } from "../util/token";
+import { getTokens, saveTokens } from "../util/token";
 import { AuthContext } from "./AuthContext";
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
@@ -20,6 +20,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [userData, setUserData] = useState<any | null>(null);
   const [phoneNumber, setPhoneNumber] = useState("");
   const router = useRouter();
+
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+  const loadSession = async () => {
+    const { accessToken } = await getTokens();
+    if (accessToken) {
+      try {
+        const data = await userService.getUserWithPlayer();
+        console.log(data)
+        setUser(data.user);
+        setIsOnboarded(data.user.profileComplete);
+        setUserData(data);
+      } catch {}
+    }
+    setLoading(false); // done loading
+  };
+
+  loadSession();
+}, []);
+
+
+
   const login = async (phone: string) => {
     try {
       setPhoneNumber(phone);
@@ -97,6 +120,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUserData,
         login,
         verifyOtp,
+        loading,
         completeOnboarding,
       }}
     >

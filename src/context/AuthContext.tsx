@@ -9,10 +9,13 @@ export interface AuthContextType {
   user: User | null;
   isOnboarded: boolean;
   userData: any;
-  setUserData:Function;
+  setUserData: Function;
   login: (phone: string) => void;
-  verifyOtp: (code:string) => void;
-  completeOnboarding: (user:any) => void;
+  verifyOtp: (code: string) => void;
+  loading: boolean;
+  completeOnboarding: (user: any) => void;
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined
+);

@@ -16,7 +16,7 @@ export interface VerifyOtpRequest {
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
-  user:any
+  user: any;
   // Add other fields if needed
 }
 
@@ -28,7 +28,7 @@ export interface UserDTO {
 }
 
 export interface UserWithPlayerResponse {
-  user: UserDTO;
+  user: any;
   playerDetails: any; // Replace `any` with proper type if known
 }
 
@@ -57,8 +57,13 @@ class UserService {
     statInfoFile: string
   ): Promise<UserDTO> {
     const formData = new FormData();
-    formData.append("basicInfo", uriToFile(basicInfoFile,"basic_info.jpg") as any);
-    formData.append("statInfo", uriToFile(statInfoFile,"stat_info.jpg") as any);
+
+    const [basicFile, statFile] = await Promise.all([
+      uriToFile(basicInfoFile, "basic_info.jpg"),
+      uriToFile(statInfoFile, "stat_info.jpg"),
+    ]);
+    formData.append("basicInfo", basicFile as any);
+    formData.append("statInfo", statFile as any);
 
     const response: AxiosResponse<UserDTO> = await axios.post(
       `${BASE_URL}/user/upload-screenshots`,
