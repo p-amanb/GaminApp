@@ -16,34 +16,29 @@ const uriToFile = (uri: string, fileName: string) => {
 const normalizeTeam = (members: Member[]) => {
   const count = members.length || 1; // prevents divide-by-zero
 
+  // helper to calculate average of a subrating
   const avg = (key: keyof Member["stats"]["subratings"]) =>
-    members.reduce((sum, p) => sum + p.stats.subratings[key], 0) / 4;
+    members.reduce((sum, p) => sum + p.stats.subratings[key], 0) / count;
 
-  const avgKd = members.reduce((sum, p) => sum + p.stats.fdRatio, 0) / 4;
+  const avgKd = members.reduce((sum, p) => sum + p.stats.fdRatio, 0) / count;
+  const avgWin = members.reduce((sum, p) => sum + p.stats.winRatePct, 0) / count;
 
-  const avgWin =members.reduce((sum, p) => sum + p.stats.winRatePct,0)/ 4;
-
-  console.log({
+  const stats = {
     combat: avg("combat"),
     survival: avg("survived"),
     support: avg("support"),
     tactics: avg("feedback"),
     victory: avgWin,
     kdr: avgKd,
-  });
+  };
+
+  console.log(stats);
 
   return {
     name: "Team",
     color: THEME.primary,
     members,
-    stats: {
-      combat: avg("combat"),
-      survival: avg("survived"),
-      support: avg("support"),
-      tactics: avg("feedback"),
-      victory: avgWin,
-      kdr: avgKd,
-    },
+    stats,
   };
 };
 

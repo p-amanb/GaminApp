@@ -1,37 +1,38 @@
+import { useTeamContext } from "@/src/context/TeamContext";
 import matchMakingService from "@/src/service/MatchmakingService";
 import { styles, THEME } from "@/src/styles/GlobalStyleSheet";
 import { normalizeTeam } from "@/src/util/utils";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { Trophy, Users } from "lucide-react-native";
+import { Info, Trophy, Users } from "lucide-react-native";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  FlatList,
+  ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+const roleColors: Record<string, string> = {
+  IGL: "#3b82f6",
+  FRAGGER: "#ef4444",
+  SUPPORT: "#10b981",
+};
 
 const TeamMatchingScreen = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [matches, setMatches] = useState<ReturnType<typeof normalizeTeam>[]>(
-    []
-  );
+  // const [teams, setTeams] = useState<ReturnType<typeof normalizeTeam>[]>([]);
+  const { teams, setTeams } = useTeamContext();
 
   const findTeams = async () => {
     setLoading(true);
-
     try {
       const resp = await matchMakingService.findTeams(2);
-
       const normalizedTeams = resp.teams.map((team) =>
         normalizeTeam(team.members)
       );
-
-      setMatches(normalizedTeams);
+      setTeams(normalizedTeams);
     } catch (error) {
       console.error("Matchmaking error:", error);
     } finally {
@@ -39,28 +40,120 @@ const TeamMatchingScreen = () => {
     }
   };
 
-  const renderTeamCard = ({ item }: any) => (
-    <LinearGradient colors={[THEME.card, "#283548"]} style={styles.matchCard}>
-      <View style={styles.rowBetween}>
-        <View>
-          <Text style={[styles.matchName]}>{item.name}</Text>
-          <Text style={styles.matchSub}>
-            Avg KD: {item.stats.kdr.toFixed(2)} • Win Rate:{" "}
-            {(item.stats.victory / 2).toFixed(1)}%
-          </Text>
-        </View>
-        <Trophy size={20} color="#fbbf24" />
-      </View>
-    </LinearGradient>
+  const renderPlayer = (member: any) => (
+    <View
+      key={member.id}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#1f2937",
+        padding: 10,
+        borderRadius: 8,
+        marginVertical: 5,
+      }}
+    >
+      <View
+        style={{
+          width: 10,
+          height: 10,
+          borderRadius: 5,
+          backgroundColor: roleColors[member.preferredRole] || "#fff",
+          marginRight: 8,
+        }}
+      />
+      <Text style={{ color: THEME.text, flex: 1 }}>
+        {member.preferredRole} - {member.stats?.currentTier?.tier || "-"} (
+        {member.stats?.overallRating?.toFixed(1) || "-"})
+      </Text>
+      <Text style={{ color: THEME.textDim, fontSize: 12 }}>
+        KD:{" "}
+        {member.stats?.matches
+          ? (member.stats.eliminations / member.stats.matches).toFixed(2)
+          : "-"}{" "}
+        • Win: {member.stats?.winRatePct?.toFixed(1) || "-"}%
+      </Text>
+    </View>
   );
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={{ padding: 20, flex: 1 }}>
-        <Text style={styles.title}>Team Matching</Text>
-        <Text style={styles.subtitle}>Find balanced opponents for scrims.</Text>
+  const renderTeam = (team: any, index: number) => {
+    const avgElo =
+      team.members.reduce(
+        (sum: number, m: any) => sum + (m.eloRating || 0),
+        0
+      ) / (team.members.length || 1);
+    const avgKDR =
+      team.members.reduce(
+        (sum: number, m: any) =>
+          sum + (m.stats?.eliminations || 0) / (m.stats?.matches || 1),
+        0
+      ) / (team.members.length || 1);
+    const avgWinRate =
+      team.members.reduce(
+        (sum: number, m: any) => sum + (m.stats?.winRatePct || 0),
+        0
+      ) / (team.members.length || 1);
 
-        {matches.length === 0 ? (
+    return (
+      <View
+        key={index}
+        style={{
+          flex: 1,
+          backgroundColor: index === 0 ? "#111827" : "#1a1f2b",
+          padding: 15,
+          borderRadius: 12,
+          marginVertical: 10,
+        }}
+      >
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            marginBottom: 10,
+          }}
+        >
+          <Text style={{ color: THEME.text, fontSize: 18, fontWeight: "700" }}>
+            Team {index + 1}
+          </Text>
+          <Trophy size={20} color="#fbbf24" />
+        </View>
+
+        {team.members.map(renderPlayer)}
+
+        {/* Stats pills row */}
+        <View style={{marginTop:10, flexDirection:"row",alignItems:"center",justifyContent:"space-between"}}>
+          {[
+            { label: "Avg Elo", value: avgElo.toFixed(0) },
+            { label: "Avg K/D", value: avgKDR.toFixed(2) },
+            { label: "Avg Win", value: avgWinRate.toFixed(1) + "%" },
+          ].map((stat, i) => (
+            <View key={i} style={styles.ratingPill}>
+              <Text style={styles.pillText}>{stat.label}: {stat.value}</Text>
+            </View>
+          ))}
+          <Info color={THEME.primary} size={18}/>
+        </View>
+      </View>
+    );
+  };
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: THEME.bg }}>
+      <View style={{ padding: 20, flex: 1 }}>
+        <Text
+          style={{
+            color: THEME.text,
+            fontSize: 28,
+            fontWeight: "700",
+            marginBottom: 5,
+          }}
+        >
+          Team Matching
+        </Text>
+        <Text style={{ color: THEME.textDim, fontSize: 14 }}>
+          Generate 2 balanced teams for your scrims
+        </Text>
+
+        {teams.length === 0 ? (
           <View
             style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
           >
@@ -68,39 +161,56 @@ const TeamMatchingScreen = () => {
               <>
                 <ActivityIndicator size="large" color={THEME.primary} />
                 <Text style={{ color: THEME.textDim, marginTop: 20 }}>
-                  Scanning Region...
+                  Building teams...
                 </Text>
               </>
             ) : (
-              <TouchableOpacity style={styles.ctaBtn} onPress={findTeams}>
+              <TouchableOpacity
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  backgroundColor: THEME.primary,
+                  paddingHorizontal: 20,
+                  paddingVertical: 12,
+                  borderRadius: 10,
+                }}
+                onPress={findTeams}
+              >
                 <Users color="#000" size={20} />
-                <Text style={styles.ctaText}>Start Scanning</Text>
+                <Text
+                  style={{ color: "#000", marginLeft: 8, fontWeight: "600" }}
+                >
+                  Build Teams
+                </Text>
               </TouchableOpacity>
             )}
           </View>
         ) : (
-          <>
-            <FlatList
-              data={matches}
-              keyExtractor={(item: any) => item.id}
-              renderItem={renderTeamCard}
-              contentContainerStyle={{ paddingTop: 20 }}
-            />
-            <View style={{ marginTop: 15 }}>
-              <TouchableOpacity
-                style={styles.outlineBtn}
-                onPress={() =>
-                  router.push({
-                    pathname: "/comparison",
-                    params: { teams: JSON.stringify(matches) },
-                  })
-                }
-              >
-                <Text style={styles.outlineBtnText}>Compare Stats</Text>
-              </TouchableOpacity>
-            </View>
-          </>
+          <ScrollView style={{ marginTop: 20 }}>
+            {teams.map(renderTeam)}
+          </ScrollView>
         )}
+        <TouchableOpacity
+          style={{
+            backgroundColor: "transparent",
+            borderWidth: 1,
+            borderColor: THEME.primary,
+            padding: 15,
+            borderRadius: 10,
+            marginTop: 20,
+            alignItems: "center",
+          }}
+          onPress={() =>
+            router.push({
+              pathname: "/comparison",
+              params: { teams: JSON.stringify(teams) },
+            })
+          }
+        >
+          <Text style={{ color: THEME.primary, fontWeight: "700" }}>
+            Compare Stats
+          </Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
